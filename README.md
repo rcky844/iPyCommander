@@ -1,2 +1,2 @@
-# iOS Nexus
-Python wrapper of `libimobiledevice` for interfacing with iOS devices.
+# iPyCommander
+Python wrapper of `pymobiledevice3` for interfacing with iOS devices.

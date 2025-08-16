@@ -1,0 +1,37 @@
+Screen {
+    layout: vertical;
+}
+
+.top {
+    height: 1fr;
+}
+
+.bottom {
+    height: 4fr;
+}
+
+.bottom.menu {
+    width: 1fr;
+    height: 100%;
+    overflow: hidden;
+}
+
+.bottom.view {
+    width: 4fr;
+    height: 100%;
+    overflow: hidden;
+}
+
+.box {
+    padding: 1;
+}
+
+.box.top {
+    border: solid green;
+}
+
+.box.bottom {
+    border: solid lightblue;
+}
+
+

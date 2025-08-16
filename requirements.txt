@@ -1,0 +1,2 @@
+pymobiledevice3==4.23.0
+textual==5.3.0
