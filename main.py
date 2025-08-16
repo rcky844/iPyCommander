@@ -3,7 +3,7 @@ import json
 from typing import Callable, Optional
 
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical, Center
+from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Header, ListItem, ListView, Static, TextArea
 from pymobiledevice3.cli.cli_common import default_json_encoder, prompt_device_list
@@ -80,21 +80,24 @@ class CommenderApp(App):
         # Draw bottom menu box
         menu_box = self.query_one("#menu-box", Vertical)
         if len(menu_extras) > 0:
+            has_matched = True
             match menu_extras:
                 case "apps":
                     menu_box.mount(ListView(
                         ListItem(Static("List installed applications", name="apps-list"))
                     ))
                 case _:
-                    if len(menu_box.children) > 1:
-                        menu_box.children[1].remove()
-            if len(menu_box.children) > 1:
-                menu_box.children[1].focus() # HACK: Assumption on last added is index 1 was made
+                    has_matched = False
 
-                # FIXME: Remove this hack
+            # Check for already added child menu
+            if has_matched:
                 if len(menu_box.children) > 2:
                     menu_box.children[2].remove()
-                return
+                menu_box.children[1].focus()
+            else:
+                if len(menu_box.children) > 1:
+                    menu_box.children[1].remove()
+            return
         menu_box.remove_children()
 
         if self.device is None:
@@ -148,7 +151,7 @@ class CommenderApp(App):
 
             # Default
             case _:
-                content_box.mount(Center(Static("Not supported yet :)")))
+                content_box.mount(Static("Not supported yet :)"))
         self.action_draw_basic(menu_extras)
 
     def action_quit(self) -> None:
