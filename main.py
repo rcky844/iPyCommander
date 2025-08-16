@@ -1,36 +1,43 @@
 import logging
 import json
-from typing import Callable, Optional
 
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical
+from textual.containers import Grid, Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button, Footer, Header, ListItem, ListView, Static, TextArea
-from pymobiledevice3.cli.cli_common import default_json_encoder, prompt_device_list
+from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static, TextArea
+from pymobiledevice3.cli.cli_common import default_json_encoder
 from pymobiledevice3.lockdown import create_using_usbmux
 from pymobiledevice3.services.installation_proxy import InstallationProxyService
 from pymobiledevice3.usbmux import select_devices_by_connection_type
 
-class SelectionDialog(ModalScreen):
-    def __init__(self, title: str = "Selection dialog",
-                 positive: str = "Positive", negative: str = "Negative",
-                 callback: Optional[Callable[[Button.Pressed], None]] = None):
+class DeviceSelectionDialog(ModalScreen):
+    def __init__(self, choices: list):
         super().__init__()
-        self.title = title
-        self.positive = positive
-        self.negative = negative
-        self.callback = callback
+        self.choices = choices
 
     def compose(self) -> ComposeResult:
         yield Grid(
-            Label(self.title, id="title"),
-            Button(self.positive, variant="error", id="positive"),
-            Button(self.negative, variant="primary", id="negative"),
-            id="dialog",
+            Label("Choose device", id="title"),
+            ListView(*[ListItem(Static(str(v))) for v in self.choices], id="selection"),
+            Button("Select", variant="error", id="select"),
+            Button("Cancel", variant="primary", id="cancel"),
+            classes="dialog",
         )
+
+    def action_selected(self):
+        self.app.device = self.choices[self.query_one("#selection", ListView).index]
+        self.app.action_draw_basic()
+        self.app.pop_screen()
+
+    def on_list_view_selected(self):
+        self.action_selected()
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if self.callback is not None:
-            self.callback(event)
+        match event.button.id:
+            case 'select':
+                self.action_selected()
+            case 'cancel':
+                self.app.exit()
 
 class CommenderApp(App):
     BINDINGS = [("q", "quit", "Quit")]
@@ -41,9 +48,6 @@ class CommenderApp(App):
         self.device = None
         self.active_item: str = ""
 
-        # Get lockdown client
-        self.connect()
-
     def connect(self):
         devices = select_devices_by_connection_type(connection_type='USB')
         if not any(devices):
@@ -53,8 +57,7 @@ class CommenderApp(App):
         if len(devices) == 1:
             self.device = create_using_usbmux(serial=devices[0].serial)
         else:
-            self.device = prompt_device_list(
-                [create_using_usbmux(serial=dev.serial) for dev in devices])
+            self.push_screen(DeviceSelectionDialog([create_using_usbmux(serial=dev.serial) for dev in devices]))
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -114,10 +117,13 @@ class CommenderApp(App):
 
     def on_mount(self) -> None:
         self.title = "iPyCommender"
+        self.connect()
         self.action_draw_basic()
 
     def on_list_view_selected(self, event: ListView.Selected):
         content_box = self.query_one("#content-box", Vertical)
+        if event.item is not content_box:
+            return
         content_box.remove_children()
 
         item_name = event.item.children[0].name

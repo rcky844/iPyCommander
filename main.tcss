@@ -34,4 +34,26 @@ Screen {
     border: solid lightblue;
 }
 
+DeviceSelectionDialog {
+    align: center middle;
+}
 
+.dialog {
+    grid-size: 2 4;
+    grid-gutter: 1;
+    grid-rows: 1fr 4;
+    padding: 0 1;
+    width: 60;
+    height: 15;
+    border: thick $background 80%;
+    background: $surface;
+}
+
+#title {
+    column-span: 2;
+}
+
+#selection {
+    row-span: 2;
+    column-span: 2;
+}
