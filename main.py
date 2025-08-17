@@ -122,7 +122,7 @@ class CommenderApp(App):
 
     def on_list_view_selected(self, event: ListView.Selected):
         content_box = self.query_one("#content-box", Vertical)
-        if event.item is not content_box:
+        if event.list_view.parent.id != "menu-box":
             return
         content_box.remove_children()
 
