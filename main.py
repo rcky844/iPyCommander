@@ -4,7 +4,7 @@ import json
 from textual.app import App, ComposeResult
 from textual.containers import Grid, Horizontal, Vertical
 from textual.screen import ModalScreen
-from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static, TextArea
+from textual.widgets import Button, Footer, Header, Label, ListItem, ListView, Static, Tab, Tabs, TextArea
 from pymobiledevice3.cli.cli_common import default_json_encoder
 from pymobiledevice3.lockdown import create_using_usbmux
 from pymobiledevice3.services.installation_proxy import InstallationProxyService
@@ -134,12 +134,11 @@ class CommenderApp(App):
                 content_box.mount(Static("Please select an option."))
 
             case "apps-list":
+                content_box.mount(Tabs(
+                    Tab("Any"), Tab("User"), Tab("Hidden"), Tab("System"),
+                ))
                 content_box.mount(
-                    TextArea.code_editor(
-                        text=json.dumps(InstallationProxyService(lockdown=self.device).get_apps(),
-                                        sort_keys=True, indent=4, default=default_json_encoder),
-                        language="json", read_only=True
-                    )
+                    TextArea.code_editor(language="json", read_only=True, id="apps-text")
                 )
                 menu_extras = "apps"
             case "info":
@@ -159,6 +158,13 @@ class CommenderApp(App):
             case _:
                 content_box.mount(Static("Not supported yet :)"))
         self.action_draw_basic(menu_extras)
+
+    def on_tabs_tab_activated(self, event: Tabs.TabActivated):
+        # TODO: Remember to add distinction for tabs!
+        self.query_one("#apps-text", TextArea).text = (
+            json.dumps(InstallationProxyService(lockdown=self.device).get_apps(application_type=event.tab.label_text),
+                       sort_keys=True, indent=4, default=default_json_encoder)
+        )
 
     def action_quit(self) -> None:
         exit()
